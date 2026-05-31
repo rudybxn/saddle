@@ -20,7 +20,18 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
+
+# Load .env into environment early so all imports see WANDB_API_KEY etc.
+for _env_file in (".env", "env"):
+    if os.path.exists(_env_file):
+        for _k, _v in re.findall(r"^([A-Z_]+)=(.*)$", open(_env_file).read(), re.M):
+            os.environ.setdefault(_k, _v.strip())
+        break
+# Support PROJECT= as alias for WEAVE_PROJECT=
+if not os.environ.get("WEAVE_PROJECT") and os.environ.get("PROJECT"):
+    os.environ["WEAVE_PROJECT"] = os.environ["PROJECT"]
 
 
 def _require_key():
@@ -193,6 +204,15 @@ def main():
                         help="W&B project for Weave leaderboard (entity/project). "
                              "Defaults to $WEAVE_PROJECT env var.")
     args = parser.parse_args()
+
+    # Init Weave once at startup so all @weave.op calls are traced from the first run.
+    if args.mode != "smoke" and args.weave_project:
+        try:
+            import weave
+            weave.init(args.weave_project)
+            print(f"Weave initialized: {args.weave_project}")
+        except Exception as e:
+            print(f"WARNING: weave.init failed ({e}) — continuing without Weave logging")
 
     if args.mode == "smoke":
         mode_smoke()
