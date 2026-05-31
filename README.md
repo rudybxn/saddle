@@ -41,16 +41,6 @@ different failure distribution, different winning team.
 One **generation** = run the whole Q&A bank through ONE team config, then diagnose and change
 one thing.
 
-```mermaid
-flowchart LR
-    A[Team config] --> B[Run bank through team<br/>→ structured Rollout per question]
-    B --> C[Weave scores every run<br/>outcome + coordination scorers]
-    C --> D[Optimizer reads failure profile<br/>pulls EXACTLY ONE lever]
-    D -->|next config| A
-    C --> E[(Weave leaderboard<br/>1 Evaluation / generation)]
-    D -.loop guards.-> F{progress? repeat? budget?}
-    F -->|no gain| G[revert to best + halt]
-```
 
 1. The team runner returns a **Rollout** per question — *what it did*, not just the answer:
    `{answer, retrieved_docs, verifier_verdict, agent_steps, tool_calls}`.
